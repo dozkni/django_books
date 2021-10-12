@@ -1,0 +1,18 @@
+from rest_framework.test import APITestCase
+from django.urls import reverse
+from store.models import Book
+from store.serializer import BookSerializer
+from rest_framework import status
+
+
+class BooksApiTestCase(APITestCase):
+    def test_get(self):
+        book_1 = Book.objects.create(name='Test book 1', price = 25)
+        url = reverse('book-list')
+        response = self.client.get(url)
+        serializer_data = BookSerializer([book_1], many=True).data
+        self.assertEqual(status.HTTP_200_OK, response.status_code)
+        self.assertEqual(serializer_data, response.data)
+
+        print(response.data)
+      
