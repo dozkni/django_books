@@ -9,3 +9,7 @@ class Book(models.Model):
     price = models.DecimalField(max_digits=15, decimal_places=2)
     user = models.ForeignKey(User, on_delete=models.CASCADE, null=True)
     genres = models.ManyToManyField(Genre)
+    author_name = models.CharField(max_length=255)
+    
+    def __str__(self):
+        return f'ID {self.id}: {self.name}'
