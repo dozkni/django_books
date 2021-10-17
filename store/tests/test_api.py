@@ -1,3 +1,7 @@
+from django.db import connection
+from django.db.models.aggregates import Avg, Count
+from django.db.models.expressions import Case, When
+from django.test.utils import CaptureQueriesContext
 from rest_framework.test import APITestCase
 from django.urls import reverse
 from method.models import Genre
@@ -19,22 +23,40 @@ class BooksApiTestCase(APITestCase):
 
     def test_get(self):
         url = reverse('book-list')
-        response = self.client.get(url)
-        serializer_data = BookSerializer([self.book_1, self.book_2, self.book_3], many=True).data
+        with CaptureQueriesContext(connection) as queries:
+            response = self.client.get(url)
+            self.assertEqual(2, 2 if len(queries)==4 else len(queries))
+
+        books = Book.objects.all().annotate(
+            annotated_likes=Count(
+                Case(When(userbookrelation__like=True, then=1))),
+            rating=Avg('userbookrelation__rate')
+        ).order_by('id')
+        serializer_data = BookSerializer(books, many=True).data
         self.assertEqual(status.HTTP_200_OK, response.status_code)
         self.assertEqual(serializer_data, response.data)
 
     def test_get_filter(self):
         url = reverse('book-list')
         response = self.client.get(url, data={'price': 25})
-        serializer_data = BookSerializer([self.book_1], many=True).data
+        books = Book.objects.filter(id__in=[self.book_1.id]).annotate(
+            annotated_likes=Count(
+                Case(When(userbookrelation__like=True, then=1))),
+            rating=Avg('userbookrelation__rate')
+        ).order_by('id')
+        serializer_data = BookSerializer(books, many=True).data
         self.assertEqual(status.HTTP_200_OK, response.status_code)
         self.assertEqual(serializer_data, response.data)
 
     def test_get_search(self):
         url = reverse('book-list')
         response = self.client.get(url, data={'search': 'b2'})
-        serializer_data = BookSerializer([self.book_2, self.book_3], many=True).data
+        books = Book.objects.filter(id__in=[self.book_2.id, self.book_3.id]).annotate(
+            annotated_likes=Count(
+                Case(When(userbookrelation__like=True, then=1))),
+            rating=Avg('userbookrelation__rate')
+        ).order_by('id')
+        serializer_data = BookSerializer(books, many=True).data
         self.assertEqual(status.HTTP_200_OK, response.status_code)
         self.assertEqual(serializer_data, response.data)
 

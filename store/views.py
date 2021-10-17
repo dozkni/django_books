@@ -1,3 +1,5 @@
+from django.db.models.aggregates import Avg, Count
+from django.db.models.expressions import Case, When
 from django.shortcuts import render
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.viewsets import GenericViewSet, ModelViewSet
@@ -15,7 +17,11 @@ def store_page(request):
     return render(request, 'index.html', {'books': Book.objects.all()})
 
 class BookView(ModelViewSet):
-    queryset = Book.objects.all()
+    queryset = Book.objects.all().annotate(
+        annotated_likes=Count(
+            Case(When(userbookrelation__like=True, then=1))),
+        rating=Avg('userbookrelation__rate')
+    ).select_related('user').prefetch_related('readers').order_by('id')
     serializer_class = BookSerializer
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
     permission_classes = [IsOwnerOrStaffOrReadOnly]

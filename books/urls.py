@@ -18,6 +18,7 @@ from django.contrib import admin
 from django.urls import path
 from rest_framework import routers
 from rest_framework.routers import SimpleRouter
+import debug_toolbar
 
 from store.views import BookView, UserBookRelationView, auth, store_app, store_page
 
@@ -30,6 +31,7 @@ urlpatterns = [
     url('', include('social_django.urls', namespace='social')),
     path('', store_app),
     path('auth/', auth),
+    path('__debug__/', include(debug_toolbar.urls)),
 ]
 
 urlpatterns += router.urls
