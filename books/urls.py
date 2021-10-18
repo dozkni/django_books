@@ -16,7 +16,6 @@ Including another URLconf
 from django.conf.urls import include, url
 from django.contrib import admin
 from django.urls import path
-from rest_framework import routers
 from rest_framework.routers import SimpleRouter
 import debug_toolbar
 
